@@ -2,7 +2,7 @@ import { Modal, InputBase, ListItemText, Menu, IconButton, Button, Avatar, Input
 import SearchIcon from "@material-ui/icons/Search";
 import React, { useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import axios from "axios";
-import AppbarHead from './AppbarHead'
+import AppbarHead from '../AppbarHead'
 import SendIcon from "@material-ui/icons/Send";
 import { useNavigate, useLocation } from "react-router";
 import ConfirmedIcon from "@material-ui/icons/Done";
@@ -14,7 +14,7 @@ import ViewIcon from '@material-ui/icons/Visibility';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Divider from '@material-ui/core/Divider';
-import Helpers from './Helpers'
+import Helpers from '../Helpers'
 import PhoneIcon from '@material-ui/icons/Phone';
 import Zoom from '@material-ui/core/Zoom';
 import Backdrop from '@material-ui/core/Backdrop';
@@ -25,22 +25,23 @@ import AddIcon from '@material-ui/icons/Add';
 import swal from "sweetalert2";
 import useState from 'react-usestateref'
 import ReactExport from "react-data-export";
-import Footer from './Footer';
-import ServerError from './images/logo/serverError.svg';
+import Footer from '../components/Footer';
+import ServerError from '../images/logo/serverError.svg';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Badge from '@material-ui/core/Badge';
 import WarningIcon from '@material-ui/icons/Warning';
-import { Colors, Fonts } from "./constants";
+
 import store from "store2";
 import Stack from '@mui/material/Stack';
 import Pagination from '@material-ui/lab/Pagination';
-import LootieNoData from './images/imgOrderDetails/noData.json'
-import LootieAddCustomer from './images/imgOrderDetails/newCustomers.json'
+import LootieNoData from '../images/imgOrderDetails/noData.json'
+import LootieAddCustomer from '../images/imgOrderDetails/newCustomers.json'
 import Lottie from "lottie-react";
-import AddOrderDialogContent from "./AddOrderDialogContent";
+import AddOrderDialogContent from "../components/AddOrderDialogContent";
 
 import { decodeToken, isExpired } from "react-jwt";
-
+import { SessionChecker } from "../utils/SessionChecker";
+import { Fonts, Colors, APIClient } from "../constants";
 
 const ExcelFile = ReactExport.ExcelFile;
 const ExcelSheet = ReactExport.ExcelFile.ExcelSheet;
@@ -374,14 +375,9 @@ export default function OrderDetailsHome() {
   const [orderId, setorderId, orderIdRef] = useState("")
 
   const [totalOrderCount, setTotalOrderCount] = useState(0)
-
   const [anchorEl, setAnchorEl] = React.useState(null);
-
   const [addOrderDataDialog, setAddOrderDataDialog] = useState(false)
-
-
   const [searchQuery, setsearchQuery, searchQueryRef] = useState("")
-
   const [tokenData, settokenData] = useState({})
 
   const btnExcelDownloadRef = useRef(null);
@@ -404,22 +400,17 @@ export default function OrderDetailsHome() {
 
   const sharedOrderListUpdater = () => {
     console.log("enter")
-    var dataToSend = { designTeamOrderIDs: sharedOrdersListRef.current };
+    var dataToSend = { designTeamOrderIDs: sharedOrdersListRef.current , username:tokenData.userData.emailId};
     axios
-      .post(Helpers().apiURL + "/addDesigningTeamOrders", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/addDesigningTeamOrders", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
-
-
         if (userName === "Designing Team") {
           sethide("none");
           getDesignTeamOrderData()
         }
         else {
-          getAllOrderDataNew();
+          getAllOrderDataNew(tokenData);
         }
-
-
-
       });
   }
 
@@ -444,7 +435,7 @@ export default function OrderDetailsHome() {
       return
     }
     setsearchQuery(value)
-    getAllOrderDataNew()
+    getAllOrderDataNew(tokenData)
     return
   }
 
@@ -452,9 +443,9 @@ export default function OrderDetailsHome() {
     setLoadingModal(true)
 
     setAnchorEl(null)
-    var dataToSend = { user: "admin", orderID: orderID, cusMobNo: mobNo };
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, orderID: orderID, cusMobNo: mobNo };
     axios
-      .post(Helpers().apiURL + "/getOrderData", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getOrderData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         setLoadingModal(false)
         try {
@@ -490,10 +481,10 @@ export default function OrderDetailsHome() {
       setLoadingModal(false)
       return
     }
-    var dataToSend = { user: "admin", orderID: orderID, cusMobNo: mobNo };
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, orderID: orderID, cusMobNo: mobNo };
 
     axios
-      .post(Helpers().apiURL + "/getOrderData", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getOrderData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         setLoadingModal(false)
         if (userName === "Designing Team") {
@@ -513,9 +504,10 @@ export default function OrderDetailsHome() {
   const printBtnClick = (orderID, mobNo) => {
     setLoadingModal(true)
     setAnchorEl(null)
-    var dataToSend = { user: "admin", orderID: orderID, cusMobNo: mobNo };
-    axios.post(Helpers().apiURL + "/getOrderData", dataToSend)
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, orderID: orderID, cusMobNo: mobNo };
+    axios.post(APIClient.API_BASE_URL +"/orderProcess/getOrderData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
+        console.log(response.data)
         setLoadingModal(false)
         var blouseDataForCalc = response.data.message.blouseData
         var salwarDataForCalc = response.data.message.salwarData
@@ -555,7 +547,7 @@ export default function OrderDetailsHome() {
           "grandTotal": response.data.message["grandTotal"],
           "dcStatus": response.data.message["dcStatus"],
           "dcAmount": response.data.message["dcAmount"],
-          "orderStatus": response.data.message.orderStatus, "OrderDatas": trimData
+          "orderStatus": response.data.message.orderStatus, "OrderDatas": trimData, "shopName":tokenData.userData.shopName,"shopAddress":tokenData.userData.shopAddress, shopMobNo:tokenData.userData.mobNo 
         }
         navigate('/billPage', { state: { billData: billDataToPrint, userName: "Shop Owner", prevPage: pageRef.current, prevOrderStatus: orderStatusRef.current, prevSearchQuery: searchQueryRef.current } });
       }).catch((err) => {
@@ -569,26 +561,28 @@ export default function OrderDetailsHome() {
 
   const onOrderStatusChange = (value) => {
     setorderStatus(value)
-    sessionCheck()
+    // sessionCheck()
     setPage(1)
     if (userName !== "Designing Team") {
-      getAllOrderDataNew()
+      getAllOrderDataNew(tokenData)
     }
   }
 
-  const getDesigningTeamSharedIDs = () => {
+  const getDesigningTeamSharedIDs = (tokenData) => {
+    console.log("getDesigningTeamSharedIDs")
 
-    var dataToSend = { user: "admin" };
+    var dataToSend = { user: "admin",  username:tokenData.userData.emailId };
     axios
-      .post(Helpers().apiURL + "/getDesigningTeamOrders", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getDesigningTeamOrders", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
-        console.log(response.data.message)
+        console.log(response.data)
         if (response.data.message.length !== 0) {
           setShareOrdersList(response.data.message[0]["designTeamOrderIDs"]);
           sharedOrderListUpdater()
         }
         else {
-          getAllOrderDataNew();
+          console.log("getDesigningTeamSharedIDs else")
+          getAllOrderDataNew(tokenData);
           setLoader(false);
         }
       }).catch((err) => {
@@ -601,10 +595,10 @@ export default function OrderDetailsHome() {
 
   const getDesignTeamOrderData = async () => {
 
-    var dataToSend = { user: "admin", orderID: (sharedOrdersListRef.current).sort().reverse(), size: 10, page: (parseInt(pageRef.current)) };
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, orderID: (sharedOrdersListRef.current).sort().reverse(), size: 10, page: (parseInt(pageRef.current)) };
 
     await axios
-      .post(Helpers().apiURL + "/getMultiOrderIdData", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getMultiOrderIdData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         let sortedOrders = response.data.message.sort((a, b) => (a["orderID"] < b["orderID"] ? 1 : -1))
         setAllOrderDatas(sortedOrders);
@@ -620,28 +614,29 @@ export default function OrderDetailsHome() {
       });
   }
 
-  const getAllOrderDataNew = () => {
+  const getAllOrderDataNew = (tokenData) => {
     console.log("enter2")
     var letterCheckRegex = '/^[^a-zA-Z]*$/';
     if (searchQueryRef.current !== "") {
       if (isNumeric(searchQueryRef.current)) {
-        dataToSend = { user: "admin", searchQuery: searchQueryRef.current, field: "mobNo", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
+        dataToSend = { user: "admin", username:tokenData.userData.emailId, searchQuery: searchQueryRef.current, field: "mobNo", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
       }
       else if (searchQueryRef.current.toLowerCase()[0] === "k" && isNumeric(searchQueryRef.current[1])) {
-        dataToSend = { user: "admin", searchQuery: searchQueryRef.current, field: "orderID", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
+        dataToSend = { user: "admin", username:tokenData.userData.emailId, searchQuery: searchQueryRef.current, field: "orderID", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
 
       }
       else if (/^[a-zA-Z\u00C0-\u00ff]+$/.test(searchQueryRef.current)) {
-        dataToSend = { user: "admin", searchQuery: searchQueryRef.current, field: "name", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
+        dataToSend = { user: "admin", username:tokenData.userData.emailId, searchQuery: searchQueryRef.current, field: "name", orderStatus: orderStatusRef.current, size: 10, page: (parseInt(pageRef.current)) }
       }
     }
     else {
-      var dataToSend = { user: "admin", searchQuery: "", field: "", orderStatus: orderStatusRef.current, page: (parseInt(pageRef.current)), size: 10 };
+      var dataToSend = { user: "admin", username:tokenData.userData.emailId, searchQuery: "", field: "", orderStatus: orderStatusRef.current, page: (parseInt(pageRef.current)), size: 10 };
     }
 
     axios
-      .post(Helpers().apiURL + "/getOrderByStatus", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getOrderByStatus", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
+        console.log(response.data)
         if (userName === "Designing Team") {
           return
         }
@@ -671,9 +666,9 @@ export default function OrderDetailsHome() {
 
 
   const getAllOrderDataForExcelFile = () => {
-    var dataToSend = { user: "admin", orderStatus: orderStatusRef.current, page: 1, size: 10 };
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, orderStatus: orderStatusRef.current, page: 1, size: 10 };
     axios
-      .post(Helpers().apiURL + "/getOrderByStatusForExcelFile", dataToSend)
+      .post(APIClient.API_BASE_URL +"/orderProcess/getOrderByStatusForExcelFile", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         setServerDown(true);
         let sortedOrders
@@ -782,7 +777,7 @@ export default function OrderDetailsHome() {
   const delBtnClick = (orderID, mobNo) => {
     setLoadingModal(true)
     setAnchorEl(null)
-    var dataToSend = { user: "admin", cusMobNo: mobNo, orderID: orderID };
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId, cusMobNo: mobNo, orderID: orderID };
     setLoadingModal(false)
     if (sharedOrdersListRef.current.includes(orderID)) {
       sweetAlertShow("Please UnAssign this order", "warning")
@@ -792,10 +787,10 @@ export default function OrderDetailsHome() {
     swal.fire({ title: `Are you sure to delete this Order ${orderID}?`, text: "You won't be able to revert this!", icon: "warning", dangerMode: true, showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Yes, delete it!' }).then((willWarn) => {
       if (willWarn.isConfirmed) {
         axios
-          .post(Helpers().apiURL + "/removeOrderData", dataToSend)
+          .post(APIClient.API_BASE_URL +"/orderProcess/removeOrderData", dataToSend,APIClient.API_HEADERS)
           .then((res) => {
             setLoadingModal(false)
-            getAllOrderDataNew();
+            getAllOrderDataNew(tokenData);
           }).catch((err) => {
             setLoadingModal(false)
             sweetAlertShow("Server Down", "warning")
@@ -811,7 +806,7 @@ export default function OrderDetailsHome() {
       getDesignTeamOrderData()
     }
     else {
-      getAllOrderDataNew()
+      getAllOrderDataNew(tokenData)
 
     }
   };
@@ -822,8 +817,8 @@ export default function OrderDetailsHome() {
   };
 
   const getOrderID = () => {
-    var dataToSend = { user: "admin" }
-    axios.post(Helpers().apiURL + "/generateOrderID", dataToSend).then((res) => {
+    var dataToSend = { user: "admin", username:tokenData.userData.emailId }
+    axios.post(APIClient.API_BASE_URL +"/orderProcess/generateOrderID", dataToSend,APIClient.API_HEADERS).then((res) => {
       setorderId(res.data.message)
     });
   };
@@ -864,12 +859,16 @@ export default function OrderDetailsHome() {
   };
 
   useLayoutEffect(() => {
+
+    // Session Check
+    let decodedTokenData =   SessionChecker()
+    decodedTokenData.success? settokenData(decodedTokenData.message):navigate("/")
+    
     prevPage = (prevPage == 0 ? 1 : prevPage)
     setPage(prevPage)
     setorderStatus(prevOrderStatus === undefined ? "All" : prevOrderStatus)
     setsearchQuery(prevSearchQuery === undefined ? "" : prevSearchQuery)
-    let decodedData = sessionCheck()
-    getDesigningTeamSharedIDs()
+    getDesigningTeamSharedIDs(decodedTokenData.message)
 
   }, []);
 
@@ -882,9 +881,8 @@ export default function OrderDetailsHome() {
 
       {
         Object.keys(tokenData).length === 0 ?
-          <div>Loading... Please Wait</div>
+          <div >Loading... Please Wait</div>
           :
-
           <div>
             <div className={classes.mainContainer}>
               <div>

@@ -6,11 +6,10 @@ import { useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { useEffect, React, useMemo, useCallback, memo, useContext } from "react";
 import axios from "axios";
-import Helpers from "./Helpers";
 import useState from "react-usestateref";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import CachedIcon from '@mui/icons-material/Cached';
-import { Colors, Fonts } from "./constants";
+import { Colors, Fonts, APIClient } from "../../constants";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import PrintIcon from '@mui/icons-material/Print';
@@ -685,9 +684,9 @@ function SalwarDressComponent(props) {
 
   const getSalwarMeasurementDataForPerson = (orderID, selectedPersonValue, dress, text) => {
     
-    var dataToSend = { user: "admin", mobNo: mobNo, personName: selectedPersonValue, };
+    var dataToSend = { user: "admin", username: props.tokenData.userData.emailId, mobNo: mobNo, personName: selectedPersonValue, };
     try {
-      axios.post(Helpers().apiURL + "/getMeasurementDataForPerson", dataToSend)
+      axios.post(APIClient.API_BASE_URL + "/orderProcess/getMeasurementDataForPerson", dataToSend ,APIClient.API_HEADERS)
         .then(function (response) {
           setSalwarDataObj((prevState) => {
             let newItem = {

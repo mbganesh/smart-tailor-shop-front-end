@@ -41,11 +41,11 @@ export default function PricingPlan() {
   }));
 
   const smartTailor = [
-    { title: "Smart Tailor Shop", rate: "₹ 6999 /month", color: "#96546F" },
-    { title: "Smart Tailor Shop Pro", rate: "₹ 7999 /month", color: "#7E8BB8" },
+    { title: "Smart Tailor Shop", rate: "FREE PLAN", color: "#96546F" },
+    { title: "Smart Tailor Shop Pro", rate: "₹ 999 /month", color: "#7E8BB8" },
     {
       title: "Smart Tailor Shop Ulimate",
-      rate: "₹ 9999 /month",
+      rate: "₹ 1999 /month",
       color: "#C8892A",
     },
   ];
@@ -66,9 +66,15 @@ export default function PricingPlan() {
   ];
 
   const smartTailorOrders = [
-    "500 Orders Placement",
-    "1000 Orders Placement",
+    "50 Orders Limit",
+    "1000 Orders Limit",
     "Unlimited Orders Placement",
+  ];
+
+  const smartTailorCustomers = [
+    "50 Customers Limit",
+    "1000 Customers Limit",
+    "Unlimited Customers",
   ];
 
   return (
@@ -121,6 +127,18 @@ export default function PricingPlan() {
                   fontWeight={"bold"}
                 >
                   {obj.rate}
+                </Typography>
+              </Stack>
+
+              <Stack direction={"row"} mt={3}  >
+                <CheckCircleIcon style={{ color: "green" }} />
+                <Typography
+                  variant="body1"
+                  pl={1}
+                  fontFamily={Fonts.MAIN_FONT}
+
+                >
+                  {smartTailorCustomers[index]}
                 </Typography>
               </Stack>
 

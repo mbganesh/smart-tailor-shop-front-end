@@ -4,7 +4,7 @@ import { useEffect, React, useMemo, useCallback, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Helpers from "./Helpers";
+
 import useState from "react-usestateref";
 import swal from "sweetalert2";
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
@@ -15,12 +15,6 @@ import shirtSVG from "./images/dressLogos/shirt.png";
 import pantSVG from "./images/dressLogos/pant.png";
 import { Colors, Fonts } from "./constants";
 
-import { faCalendarWeek, faBoxes, faCheck, faSpinner, faShoppingBag, faCheckDouble, faFolder, faUsers, faUser, } from '@fortawesome/free-solid-svg-icons'
-import SalwarDressComponent from "./SalwarDressComponent";
-import BlouseDressComponent from "./BlouseDressComponent";
-import ShirtDressComponent from "./ShirtDressComponent";
-import PantDressComponent from "./PantDressComponent";
-import OrderDressBottomComponent from "./OrderDressBottomComponent";
 import { OrderDressContext } from "./Provider";
 const salwarColorCode = Colors.SALWAR_COLOR;
 
@@ -50,9 +44,9 @@ export default function OrderDressButtonComponent(props) {
             confirmButtonText: 'Ok'
           }).then((willWarn) => {
             if (willWarn.isConfirmed) {
-              var datatoSend = { user: "admin", orderID: props.orderID }
-              // return
-              axios.post(Helpers().apiURL + "/removeOrderID", datatoSend).then((res) => {
+              var datatoSend = { user: "admin", username: tokenData.userData.emailId, orderID: props.orderID }
+
+              axios.post(APIClient.API_BASE_URL +"/orderProcess/removeOrderID", datatoSend,APIClient.API_HEADERS).then((res) => {
                 navigate(-2);
               });
             }

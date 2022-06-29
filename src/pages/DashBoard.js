@@ -1,12 +1,12 @@
 import { Button, makeStyles, Paper, Table, TableBody, TableCell, TableContainer, TableFooter, TablePagination, TableHead, TableRow, Typography, Card } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AppBarHead from "./AppbarHead";
+import AppBarHead from "../AppbarHead";
 import GetAppIcon from '@material-ui/icons/GetApp';
-import Helpers from './Helpers'
+import Helpers from '../Helpers'
 import ReactExport from "react-data-export";
-import Footer from './Footer'
-import { Colors, Fonts } from "./constants";
+import Footer from '../components/Footer'
+import { Colors, Fonts, APIClient } from "../constants";
 import store from "store2";
 import { useNavigate } from "react-router";
 import LocalPrintshopIcon from '@material-ui/icons/LocalPrintshop';
@@ -17,6 +17,7 @@ import TextField from "@mui/material/TextField";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DatePicker from "@mui/lab/DatePicker";
+import { SessionChecker } from "../utils/SessionChecker";
 
 
 
@@ -100,7 +101,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   secContainerItemsdiv2: {
-    width: '49%', 
+    width: '49%',
     [theme.breakpoints.down('sm')]: {
       width: '100%'
     },
@@ -183,7 +184,7 @@ export default function DashBoard() {
   const [chartDressLabels, setChartDressLabels] = useState([])
   const [chartCusData, setChartCusData] = useState([])
 
-  const [cusDataYearLabels, setCusDataYearLabels] =useState([])
+  const [cusDataYearLabels, setCusDataYearLabels] = useState([])
   const [cusDataYearData, setCusDataYearData] = useState([])
 
 
@@ -194,7 +195,7 @@ export default function DashBoard() {
   const [chartCusDataTotal, setChartCusTotal] = useState(0)
 
   const [yearValue, setYearValue] = useState(new Date());
-
+  const [tokenData, settokenData] = useState({})
 
   const chartData = {
     labels: chartLabels,
@@ -306,7 +307,7 @@ export default function DashBoard() {
     }
   }
 
-  const getYearBasedCustomerData = (year,allCustomerData) => {
+  const getYearBasedCustomerData = (year, allCustomerData) => {
     let monthwithNo = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12' }
     let nums = Object.values(monthwithNo)
     let mons = Object.keys(monthwithNo)
@@ -324,31 +325,31 @@ export default function DashBoard() {
     setCusDataYearData(Object.values(customerYearBasedData))
   }
 
-  const getCustomerDatas = () => {
-    var dataToSend = { user: "admin" };
-    var url = Helpers().apiURL + "/allCustomerData"
+  const getCustomerDatas = (tokenData) => {
+    var dataToSend = { user: "admin", username: tokenData.userData.emailId };
+
 
     axios
-      .post(Helpers().apiURL + "/allCustomerData", dataToSend)
+      .post(APIClient.API_BASE_URL + "/customerProcess/allCustomerData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         let allCustomerData = response.data.message
         setAllCustomerData(response.data.message)
         let top10CustomersArr = response.data.top10Customer
-      
+
         setChartCusLabels((top10CustomersArr.map((text) => { return text.cusName })))
         setChartCusData((top10CustomersArr.map((text) => { return text.finalAmount })))
 
-        getYearBasedCustomerData(yearValue,response.data.message )
+        getYearBasedCustomerData(yearValue, response.data.message)
 
       }).catch((error) => {
         console.log(error)
       })
   };
 
-  const getProductSales = () => {
-    var dataToSend = { user: "admin" };
+  const getProductSales = (tokenData) => {
+    var dataToSend = { user: "admin", username: tokenData.userData.emailId };
     axios
-      .post(Helpers().apiURL + "/dashBoard", dataToSend)
+      .post(APIClient.API_BASE_URL + "/dashboardProcess/dashBoard", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         let dressData = { "Salwar": response.data.message.Salwar, "Blouse": response.data.message.Blouse }
         setChartDressLabels(Object.keys(dressData))
@@ -363,88 +364,94 @@ export default function DashBoard() {
 
 
   useEffect(() => {
-    sessionCheck()
-    getCustomerDatas()
-    getProductSales()
+    // Session Check
+    let decodedTokenData = SessionChecker()
+    decodedTokenData.success ? settokenData(decodedTokenData.message) : navigate("/")
+
+    getCustomerDatas(decodedTokenData.message)
+    getProductSales(decodedTokenData.message)
   }, []);
 
   return (
     <>
-      <div style={{ backgroundColor: Colors.REPORT_LIGHT_COLOR, overflow: "hidden", minHeight: "96.8vh", maxWidth: "100vw", backgroundRepeat: "no-repeat" }} >
-        <div>
-          <AppBarHead dataParent={{ appBtnColor: Colors.DASHBOARD_MAIN_COLOR, appBtnText: "DashBoard" }} />
-        </div>
+      {
+        Object.keys(tokenData).length === 0 ?
+          <div>Loading... Please Wait</div>
+          :
+          <div>
+            <div style={{ backgroundColor: Colors.REPORT_LIGHT_COLOR, overflow: "hidden", minHeight: "96.8vh", maxWidth: "100vw", backgroundRepeat: "no-repeat" }} >
+              <div>
+                <AppBarHead dataParent={{ appBtnColor: Colors.DASHBOARD_MAIN_COLOR, appBtnText: "DashBoard" , userData: tokenData.userData}} />
+              </div>
 
-        <div style={{ width: "90%", margin: 'auto', flex: 1, paddingTop: "1%", display: "" }}>
-          <Card elevation={3} className={classes.firstContainerItemsCard}>
-            <div >
-              <Typography variant="subtitle1" style={{color:Colors.DASHBOARD_MAIN_COLOR, fontWeight:"bold"}}>
-                Our Top 10 Customers
-              </Typography>
-            </div>
-            <Bar options={customerDataOptions} data={top10customerData} />
-          </Card>
-
-          <div className={classes.secContainer}>
-            <div className={classes.secContainerItemsdiv1}>
-              <Card elevation={3} className={classes.secContainerItemsCard}>
-                <div >
-                  <Typography variant="subtitle1"  style={{color:Colors.DASHBOARD_MAIN_COLOR, fontWeight:"bold"}}>
-                    Our Product Sales
-                  </Typography>
-                  <Typography variant="subtitle2" style={{ color: "grey" }}>
-                    Salwar - {formatNumber(chartDressData[0])} &nbsp;&nbsp;
-                    Blouse - {formatNumber(chartDressData[1])}
-                  </Typography>
-                </div>
-                <Doughnut options={customerDataOptions} data={dressData} />
-              </Card>
-            </div>
-
-            <div className={classes.secContainerItemsdiv2}>
-              <Card elevation={3} className={classes.secContainerItemsCard}>
-                <div style={{ display: "flex" }} >
-                  <div>
-                    <Typography variant="subtitle1"  style={{color:Colors.DASHBOARD_MAIN_COLOR, fontWeight:"bold"}}>
-                      Customer Report
-                    </Typography>
-                    <Typography variant="subtitle2" style={{ color: "grey" }}>
-                      Total Customers for Year {yearValue.getFullYear().toString()}  : {cusDataYearData.reduce((partialSum, a) => partialSum + a, 0)}
-                    </Typography>
-                    <Typography variant="subtitle2" style={{ color: "grey" }}>
-                      Total Customers of All Years : {allCustomerData.length}
+              <div style={{ width: "90%", margin: 'auto', flex: 1, paddingTop: "1%", display: "" }}>
+                <Card elevation={3} className={classes.firstContainerItemsCard}>
+                  <div >
+                    <Typography variant="subtitle1" style={{ color: Colors.DASHBOARD_MAIN_COLOR, fontWeight: "bold" }}>
+                      Our Top 10 Customers
                     </Typography>
                   </div>
-                  <div style={{ marginLeft: "auto" }}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <div style={{ width: 200 }}>
-                        <DatePicker
-                          inputFormat="yyyy"
-                          views={["year"]}
-                          label="Year"
-                          minDate={new Date("2021-03-01")}
-                          maxDate={new Date("2030-06-01")}
-                          value={yearValue}
-                          onChange={(value) => {
-                            onYearChange(value);
-                          }}
-                          renderInput={(params) => <TextField {...params} helperText={null} />}
-                        />
+                  <Bar options={customerDataOptions} data={top10customerData} />
+                </Card>
+
+                <div className={classes.secContainer}>
+                  <div className={classes.secContainerItemsdiv1}>
+                    <Card elevation={3} className={classes.secContainerItemsCard}>
+                      <div >
+                        <Typography variant="subtitle1" style={{ color: Colors.DASHBOARD_MAIN_COLOR, fontWeight: "bold" }}>
+                          Our Product Sales
+                        </Typography>
+                        <Typography variant="subtitle2" style={{ color: "grey" }}>
+                          Salwar - {formatNumber(chartDressData[0])} &nbsp;&nbsp;
+                          Blouse - {formatNumber(chartDressData[1])}
+                        </Typography>
                       </div>
-                    </LocalizationProvider>
+                      <Doughnut options={customerDataOptions} data={dressData} />
+                    </Card>
+                  </div>
+
+                  <div className={classes.secContainerItemsdiv2}>
+                    <Card elevation={3} className={classes.secContainerItemsCard}>
+                      <div style={{ display: "flex" }} >
+                        <div>
+                          <Typography variant="subtitle1" style={{ color: Colors.DASHBOARD_MAIN_COLOR, fontWeight: "bold" }}>
+                            Customer Report
+                          </Typography>
+                          <Typography variant="subtitle2" style={{ color: "grey" }}>
+                            Total Customers for Year {yearValue.getFullYear().toString()}  : {cusDataYearData.reduce((partialSum, a) => partialSum + a, 0)}
+                          </Typography>
+                          <Typography variant="subtitle2" style={{ color: "grey" }}>
+                            Total Customers of All Years : {allCustomerData.length}
+                          </Typography>
+                        </div>
+                        <div style={{ marginLeft: "auto" }}>
+                          <LocalizationProvider dateAdapter={AdapterDateFns}>
+                            <div style={{ width: 200 }}>
+                              <DatePicker
+                                inputFormat="yyyy"
+                                views={["year"]}
+                                label="Year"
+                                minDate={new Date("2021-03-01")}
+                                maxDate={new Date("2030-06-01")}
+                                value={yearValue}
+                                onChange={(value) => { onYearChange(value); }}
+                                renderInput={(params) => <TextField {...params} helperText={null} />}
+                              />
+                            </div>
+                          </LocalizationProvider>
+                        </div>
+                      </div>
+                      <Line options={customerDataOptions} data={customerYearChartData} />
+                    </Card>
                   </div>
                 </div>
-                <Line options={customerDataOptions} data={customerYearChartData} />
-              </Card>
+
+              </div>
+
             </div>
+            <Footer dataBackParent={{ backColor: Colors.REPORT_LIGHT_COLOR }} />
           </div>
-
-
-        
-        </div>
-
-      </div>
-      <Footer dataBackParent={{ backColor: Colors.REPORT_LIGHT_COLOR }} />
+      }
     </>
   );
 }

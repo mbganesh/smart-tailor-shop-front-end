@@ -5,7 +5,7 @@ import { Alert } from "@material-ui/lab";
 import { useNavigate } from "react-router";
 import PersonIcon from "@material-ui/icons/Person";
 import VpnKeyIcon from "@material-ui/icons/VpnKey";
-import Footer from "../Footer";
+
 import swal from "sweetalert2";
 import axios from "axios";
 import Helpers from '../Helpers'

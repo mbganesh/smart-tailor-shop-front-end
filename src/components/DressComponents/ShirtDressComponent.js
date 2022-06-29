@@ -8,19 +8,9 @@ import { useEffect, React, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Helpers from "./Helpers";
 import useState from "react-usestateref";
-import swal from "sweetalert2";
-import AutorenewIcon from "@material-ui/icons/Autorenew";
-import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
-import SaveIcon from "@material-ui/icons/Save";
-import salwarSVG from "./images/dressLogos/salwar_nav.svg";
-import blouseSVG from "./images/dressLogos/blouse_nav.svg";
-import shirtSVG from "./images/dressLogos/shirt.png";
-import pantSVG from "./images/dressLogos/pant.png";
-import WarningIcon from '@material-ui/icons/Warning';
-import CachedIcon from '@material-ui/icons/Cached';
-import { Colors, Fonts } from "./constants";
+
+import { Colors, Fonts, APIClient } from "../../constants";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { } from '@fortawesome/free-solid-svg-icons'
 import { } from '@fortawesome/free-regular-svg-icons'
@@ -30,7 +20,7 @@ import PrintIcon from '@material-ui/icons/Print';
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { faCalendarWeek, faBoxes, faCheck, faSpinner, faShoppingBag, faCheckDouble, faFolder, faUsers, faUser, } from '@fortawesome/free-solid-svg-icons'
-import SalwarDressComponent from "./SalwarDressComponent";
+
 
 
 // Shirt Color Codes
@@ -281,9 +271,9 @@ const useStyles = useMemo(() => {
   };
 
   const getMeasurementDataForPerson = (orderID, selectedPersonValue, dress, text) => {
-    var dataToSend = { user: "admin", mobNo: mobNo, personName: selectedPersonValue, };
+    var dataToSend = { user: "admin", username: props.tokenData.userData.emailId, mobNo: mobNo, personName: selectedPersonValue, };
     try {
-      axios.post(Helpers().apiURL + "/getMeasurementDataForPerson", dataToSend)
+      axios.post(APIClient.API_BASE_URL + "/orderProcess/getMeasurementDataForPerson", dataToSend,APIClient.API_HEADERS)
         .then(function (response) {
           if (dress === "shirt") {
             const result = shirtData.map((item) => {

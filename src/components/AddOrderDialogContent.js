@@ -1,22 +1,72 @@
-import {
-  Typography,
-  TextField,
-  Button,
-  makeStyles, Card
-} from "@material-ui/core";
+import { Typography, TextField, Button, makeStyles, Card, withStyles, IconButton } from "@material-ui/core";
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import axios from "axios";
-import React, {  useEffect } from "react";
+import React, {  useEffect, useLayoutEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import AppbarHead from './AppbarHead'
-import { Colors, Fonts } from "./constants";
-import Helpers from './Helpers'
+import AppbarHead from '../AppbarHead'
+import { Colors, Fonts, APIClient } from "../constants";
+import Helpers from '../Helpers'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import useState from "react-usestateref";
 
+
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import MuiDialogActions from '@material-ui/core/DialogActions';
+import CloseIcon from '@material-ui/icons/Close';
+
+import { SessionChecker } from "../utils/SessionChecker";
+
 const colorCode = "#DE834D";
 const bgColor = "#f1dbc0"
+
+
+
+const dialogStyles = (theme) => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(2),
+  },
+  closeButton: {
+    position: 'absolute',
+    right: theme.spacing(1),
+    top: theme.spacing(1),
+    color: theme.palette.grey[500],
+  },
+});
+const DialogTitle = withStyles(dialogStyles)((props) => {
+  const { children, classes, onClose, ...other } = props;
+  return (
+    <MuiDialogTitle disableTypography className={classes.root} {...other}>
+      <Typography variant="h6">{children}</Typography>
+      {onClose ? (
+        <IconButton aria-label="close" className={classes.closeButton} onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      ) : null}
+    </MuiDialogTitle>
+  );
+});
+
+const DialogContent = withStyles((theme) => ({
+  root: {
+    padding: theme.spacing(2),
+  },
+}))(MuiDialogContent);
+
+const DialogActions = withStyles((theme) => ({
+  root: {
+    margin: 0,
+    padding: theme.spacing(1),
+  },
+}))(MuiDialogActions);
+
+
+
+
+
 const styles = makeStyles((theme) => ({
   root: {
     backgroundColor: Colors.ORDER_LIGHT_COLOR,
@@ -55,6 +105,7 @@ const styles = makeStyles((theme) => ({
   },
   textfiedFlexItem:
   {
+    marginTop:10,marginBottom:10,
     "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
       borderColor: colorCode,
     },
@@ -123,13 +174,17 @@ const styles = makeStyles((theme) => ({
   }
 }));
 
-function AddOrder() {
+
+
+
+
+function AddOrderDialogContent(props) {
   const classes = styles();
   const navigate = useNavigate();
   const { state } = useLocation();
   const { userName, mode } = state;
   const [allMobNos, setAllMobNos] = useState({})
-  const [orderId, setorderId, orderIdRef] = useState("")
+ 
   const [customerName, setcustomerName] = useState("")
   const [customerAddress, setcustomerAddress] = useState("")
   const [salwarPersons, setSalwarPersons] = useState([])
@@ -138,19 +193,12 @@ function AddOrder() {
   const [pantPersons, setPantPersons] = useState([])
   const [mobileNo, setmobileNo] = useState("")
   const [currentDataTime, setcurrentDataTime] = useState("")
-
-
-  const getOrderID = () => {
-    var dataToSend = { user: "admin" }
-    axios.post(Helpers().apiURL + "/generateOrderID", dataToSend).then((res) => {
-      setorderId(res.data.message)
-    });
-  };
+  const [tokenData, settokenData] = useState({})
 
   const getMobileNo = (typedMobNo) => {
-    var datatoSend = { user: "admin", cusMobNo: typedMobNo }
+    var datatoSend = { user: "admin",username: tokenData.userData.emailId, cusMobNo: typedMobNo }
     // return
-    axios.post(Helpers().apiURL + "/getCustomerData", datatoSend).then((res) => {
+    axios.post(APIClient.API_BASE_URL + "/customerProcess/getCustomerData", datatoSend,APIClient.API_HEADERS).then((res) => {
       setcustomerName(res.data.message.cusName)
       setcustomerAddress(res.data.message.cusAddress)
       setSalwarPersons(res.data.message.salwarPersons)
@@ -187,10 +235,12 @@ function AddOrder() {
     }
   };
 
-  const getAllMobNos = () => {
-    var datatoSend = { user: "admin" }
-    axios.post(Helpers().apiURL + "/getAllCusMobNos", datatoSend).then((res) => {
+  const getAllMobNos = (tokenData) => {
+    console.log("getAllMobNos")
+    var datatoSend = { user: "admin" ,username: tokenData.userData.emailId}
+    axios.post(APIClient.API_BASE_URL + "/customerProcess/getAllCusMobNos", datatoSend,APIClient.API_HEADERS).then((res) => {
 
+      console.log(res.data)
       setAllMobNos(res.data.message)
     });
   }
@@ -204,10 +254,10 @@ function AddOrder() {
       alert("New Customer!! Please Register it in Customer Details ")
       return
     }
-    var dataToPass = { "orderDate": currentDataTime, "name": customerName, "orderID": orderId, "mobNo": mobileNo, "salwarPersons": salwarPersons, "blousePersons": blousePersons, "shirtPersons": shirtPersons, "pantPersons": pantPersons }
+    var dataToPass = { "orderDate": currentDataTime, "name": customerName, "orderID": props.orderId, "mobNo": mobileNo, "salwarPersons": salwarPersons, "blousePersons": blousePersons, "shirtPersons": shirtPersons, "pantPersons": pantPersons }
     navigate('/addblousesalwar', {
       state: {
-        orderDetailsData: dataToPass, mode: "add", userName: userName
+        orderDetailsData: dataToPass, mode: "add", userName: userName, prevPage:props.prevPage
       }
     });
 
@@ -216,55 +266,42 @@ function AddOrder() {
 
   //  Back Btn
   const handleBackBtn = () => {
-    var datatoSend = { user: "admin", orderID: orderId }
+    var datatoSend = { user: "admin",username: tokenData.userData.emailId, orderID: props.orderId }
     // return
-    axios.post(Helpers().apiURL + "/removeOrderID", datatoSend).then((res) => {
-      navigate(-1);
+    axios.post(APIClient.API_BASE_URL + "/orderProcess/removeOrderID", datatoSend,APIClient.API_HEADERS).then((res) => {
+      // navigate(-1);
+      props.setAddOrderDataDialog(false)
+      setcustomerName("")
+      setcustomerAddress("")
+      setcurrentDataTime("")
+
     });
     // navigate('/orderDetailPage', { state: { userName: "Shop Owner" } });
   }
 
-
-
   const [finishStatus, setfinishStatus] = useState(false);
 
-  const onBackButtonEvent = (e) => {
-   
-    // handleBackBtn()
-    e.preventDefault();
-    setfinishStatus(true)
-    var datatoSend = { user: "admin", orderID: orderIdRef.current }
-    axios.post(Helpers().apiURL + "/removeOrderID", datatoSend).then((res) => {
-          navigate(-1)
-        });
-
-  }
-
   useEffect(() => {
-    getAllMobNos()
-    getOrderID()
-    window.history.pushState(null, null, window.location.pathname);
-    window.addEventListener('popstate', onBackButtonEvent);
-    return () => {
-      window.removeEventListener('popstate', onBackButtonEvent);
-    };
 
+    // Session Check
+    let decodedTokenData = SessionChecker()
+    decodedTokenData.success ? settokenData(decodedTokenData.message) : navigate("/")
     
+    getAllMobNos(decodedTokenData.message)
   }, [])
 
   return (
-    <div className={classes.root} >
-      {/* <div>
-        <AppbarHead dataParent={{ userNameFrom: userName, appBtnColor: colorCode, appBtnText: "Order Details" }} />
-      </div> */}
-      <Typography className={classes.titleText}>Add Order</Typography>
 
-      <div className={classes.divFlexBox} >
+    <Dialog  fullWidth   onClose={handleBackBtn} open={props.addOrderDataDialog}>
+        <DialogTitle style={{backgroundColor:Colors.ORDER_MAIN_COLOR, color:"white"}} >
+          Add New Order
+        </DialogTitle>
+        <DialogContent dividers>
+
         <div>
-          <Card elevation={5} className={classes.card} >
             <div className={classes.textfiedFlexItem}  >
               <Typography className={classes.textFieldLabel}>Order ID</Typography>
-              <TextField size="small" variant="outlined" disabled fullWidth value={orderId}></TextField>
+              <TextField size="small" variant="outlined" disabled fullWidth value={props.orderId}></TextField>
             </div>
 
             <div className={classes.textfiedFlexItem} >
@@ -301,35 +338,31 @@ function AddOrder() {
 
               ></TextField>
             </div>
-
-            <div style={{ display: "flex", flexDirection: "row", }}>
-              <Button
-                startIcon={<ArrowBackIcon />}
-                fullWidth
-                className={classes.btnBack}
-                variant="outlined"
-                onClick={handleBackBtn}
-              >
-                Back
-              </Button>
-
-              <Button
-                endIcon={<ArrowForwardIcon />}
-                className={classes.btnNext}
-                variant="contained"
-                fullWidth
-                onClick={onNextBtnClick}
-              >
-                Next
-              </Button>
-            </div>
-          </Card>
         </div>
+        </DialogContent>
+        <DialogActions style={{backgroundColor:Colors.ORDER_LIGHT_COLOR}}>
+          <Button style={{fontSize: 14,  width: 120, height: "35px", marginLeft: "5%"}} variant = "outlined" onClick={handleBackBtn}  autoFocus>
+            Cancel
+          </Button>
+          <Button  variant="contained"  autoFocus color="primary"  onClick={onNextBtnClick}
+          style={{ fontSize: 14, backgroundColor: Colors.ORDER_MAIN_COLOR, width: 120, height: "35px", marginLeft: "5%" }}
+          >
+            Next
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      </div>
-    </div>
+
+
+
+
+
+
+
+
+
 
   );
 }
 
-export default AddOrder;
+export default AddOrderDialogContent;

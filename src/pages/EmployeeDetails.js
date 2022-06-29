@@ -6,11 +6,11 @@ import React, { useEffect, useRef } from "react";
 
 import axios from "axios";
 import { useNavigate } from "react-router";
-import AppBarHead from './AppbarHead'
+import AppBarHead from "../AppbarHead";
 import ViewIcon from '@material-ui/icons/Visibility';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import Helpers from './Helpers'
+import Helpers from '../Helpers'
 import AddIcon from '@material-ui/icons/Add';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
 import Zoom from '@material-ui/core/Zoom';
@@ -21,20 +21,23 @@ import CachedIcon from '@material-ui/icons/Cached';
 import swal from "sweetalert2";
 import ReactExport from "react-data-export";
 import useState from 'react-usestateref'
-import Footer from './Footer';
-import ServerError from './images/logo/serverCustDetail.svg';
-import { Colors, Fonts } from "./constants";
+import Footer from '../components/Footer';
+import ServerError from '../images/logo/serverCustDetail.svg';
+import { APIClient, Colors, Fonts } from "../constants";
 import Stack from '@mui/material/Stack';
 import store from "store2";
 import SearchOutlined from '@material-ui/icons/SearchOutlined';
 import PhoneIcon from '@material-ui/icons/Phone';
 import Pagination from '@material-ui/lab/Pagination';
 import PaginationItem from '@material-ui/lab/PaginationItem';
-import LootieNoData from './images/imgCustomerDetails/noData.json'
+import LootieNoData from '../images/imgCustomerDetails/noData.json'
 
-import LootieAddCustomer from './images/imgCustomerDetails/newCustomers.json'
+import LootieAddCustomer from '../images/imgCustomerDetails/newCustomers.json'
 import Lottie from "lottie-react";
 import { decodeToken, isExpired } from "react-jwt";
+import { SessionChecker } from "../utils/SessionChecker";
+
+
 
 
 const ExcelFile = ReactExport.ExcelFile;
@@ -245,7 +248,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-export default function CustomerDetails() {
+export default function EmployeeDetails() {
   const navigate = useNavigate();
   const [alert1, setAlert1] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -403,9 +406,9 @@ export default function CustomerDetails() {
       var dataToSend = { user: "admin", searchQuery: "", field: "", size: 10, page: (parseInt(pageRef.current)),username:tokenData.userData.emailId };
     }
 
-    var url = Helpers().apiURL + "/getAllCustomerData"
+   
     axios
-      .post(Helpers().apiURL + "/getAllCustomerData", dataToSend)
+      .post(APIClient.API_BASE_URL + "/customerProcess/getAllCustomerData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
 
         // inputSearchRef.current.focus()
@@ -504,10 +507,10 @@ export default function CustomerDetails() {
 
 
   const getAllCustomerDataForExcelFile = () => {
-    var dataToSend = { user: "admin" };
-    var url = Helpers().apiURL + "/allCustomerData"
+    var dataToSend = { user: "admin" ,username:tokenData.userData.emailId};
+
     axios
-      .post(Helpers().apiURL + "/allCustomerData", dataToSend)
+      .post(APIClient.API_BASE_URL + "/customerProcess/allCustomerData", dataToSend,APIClient.API_HEADERS)
       .then((response) => {
         // inputSearchRef.current.focus()
         setPageLoading("none")
@@ -617,7 +620,7 @@ export default function CustomerDetails() {
       confirmButtonText: 'Yes, delete it!'
     }).then((willWarn) => {
       if (willWarn.isConfirmed) {
-        axios.post(Helpers().apiURL + "/deleteCustomerData", dataToSend)
+        axios.post(APIClient.API_BASE_URL + "/customerProcess/deleteCustomerData", dataToSend,APIClient.API_HEADERS)
           .then((res) => {
             if (res.data.message !== "Deleted") {
               sweetAlertShow("Please Delete Orders of this Customer", "warning")
@@ -657,24 +660,14 @@ export default function CustomerDetails() {
       }
     });
   }
-  const sessionCheck = () => {
-    let token = sessionStorage.getItem('stsToken')
-    console.log(token)
-    if (isExpired(token)) {
-      navigate("/");
-    }
-    else {
-      let decodedData = decodeToken(token)
-      settokenData(decodedData)
-      console.log(decodedData)
-      return decodedData
-    }
-  }
+  
 
   useEffect(() => {
-    let decodedData =  sessionCheck()
+    let decodedTokenData =   SessionChecker()
+    decodedTokenData.success? settokenData(decodedTokenData.message):navigate("/")
     // getAllCustomerData();
-    getAllCustomerDataNew(decodedData)
+
+    getAllCustomerDataNew(decodedTokenData.message)
   }, []);
 
   useEffect(() => {

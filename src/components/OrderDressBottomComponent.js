@@ -4,12 +4,12 @@ import { useEffect, React, useMemo, useCallback, memo, forwardRef, useImperative
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Helpers from "./Helpers";
+import Helpers from "../Helpers";
 import useState from "react-usestateref";
 import swal from "sweetalert2";
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
 import SaveIcon from "@material-ui/icons/Save";
-import { Colors, Fonts } from "./constants";
+import { Colors, Fonts, APIClient } from "../constants";
 import LoopIcon from '@material-ui/icons/Loop';
 
 
@@ -110,8 +110,8 @@ export const OrderDressBottomComponent = forwardRef((props, ref) => {
                 confirmButtonText: 'Ok'
             }).then((willWarn) => {
                 if (willWarn.isConfirmed) {
-                    var datatoSend = { user: "admin", orderID: props.orderID }
-                    axios.post(Helpers().apiURL + "/removeOrderID", datatoSend).then((res) => {
+                    var datatoSend = { user: "admin", username: props.tokenData.userData.emailId, orderID: props.orderID }
+                    axios.post(APIClient.API_BASE_URL + "/orderProcess/removeOrderID", datatoSend,APIClient.API_HEADERS).then((res) => {
                         navigate('/orderDetailPage', { state: { userName: "Shop Owner", tohide: "", prevPage:props.prevPage, prevOrderStatus:props.prevOrderStatus, prevSearchQuery:props.prevSearchQuery } });
                     });
                 }

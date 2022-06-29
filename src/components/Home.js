@@ -61,7 +61,7 @@ export default function Home() {
   const sentence = [
     "Smart Tailor Shop",
     "A Complete Tailor Shop Management Software",
-    "Starts @ 6999/- only",
+    
   ];
 
 

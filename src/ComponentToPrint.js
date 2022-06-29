@@ -12,43 +12,7 @@ import { faCalendarWeek, faBoxes, faCheck, faSpinner, faShoppingBag, faCheckDoub
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 
-const useStyles = makeStyles((theme) => ({
-  toolBar: {
-    backgroundColor: "#00adb5",
-    flexGrow: 1,
-  },
-  title: {
-    flexGrow: 1,
-    fontSize: "21px",
-    fontWeight: "bold",
-    "&:hover": {
-      cursor: "pointer",
-    },
-  },
-  logBtn: {
-    fontSize: "21px",
-    textTransform: "none",
-    "&:hover": {
-      backgroundColor: "red",
-    },
-  },
-  heading: {
-    textAlign: "center",
-    fontSize: "21px",
-    padding: theme.spacing(2),
-    fontWeight: "bold",
-    color: "#00adb5",
-  },
-  billTable: {
-    minWidth: 650,
-    "& .MuiTableCell-root": {
-      borderLeft: "1px solid black",
-      borderRight: "1px solid black",
-      borderTop: "1px solid black",
-      borderBottom: "1px solid black",
-    }
-  }
-}));
+
 
 export class ComponentToPrint extends React.PureComponent {
   state = {
@@ -127,11 +91,11 @@ export class ComponentToPrint extends React.PureComponent {
 
         <div >
           <div style={{ display: 'flex', justifyContent: 'center', flexDirection: "column", alignItems: "center" }}>
-            <Typography variant={"h5"} style={{ fontWeight: 'bold', }}>Komala Creation</Typography>
+            <Typography variant={"h5"} style={{ fontWeight: 'bold', }}>{this.state.allOrderData.shopName}</Typography>
 
-            <Typography variant={"subtitle2"} >4, Chinnakovil street, Murugankurichi<br /></Typography>
-            <Typography variant={"subtitle2"} >Tirunelveli - 627002<br /></Typography>
-            <Typography variant={"subtitle2"} >Cell: +91 9585501760</Typography>
+            <Typography variant={"subtitle2"} >{this.state.allOrderData.shopAddress}</Typography>
+            {/* <Typography variant={"subtitle2"} >Tirunelveli - 627002<br /></Typography> */}
+            <Typography variant={"subtitle2"} >Cell: {this.state.allOrderData.shopMobNo}</Typography>
             <Divider style={{ color: "red", height: "1px", backgroundColor: "black", width: "90%", margin: "auto" }} />
 
           </div>

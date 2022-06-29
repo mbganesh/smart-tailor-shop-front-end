@@ -1,28 +1,19 @@
-import {
-  Button,
-  InputAdornment,
-  makeStyles,
-  Snackbar,
-  TextField,
-  Typography, Card
-} from "@material-ui/core";
+import { Button, InputAdornment, makeStyles, Snackbar, TextField, Typography, Card } from "@material-ui/core";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import Alert from "@material-ui/lab/Alert";
 import axios from "axios";
-import date from "date-and-time";
-import AppBarHead from './AppbarHead'
-import Helpers from './Helpers'
+
+import AppBarHead from "../AppbarHead";
+
 import swal from "sweetalert2";
-import { Colors, Fonts } from "./constants";
+import { Colors, Fonts,  APIClient} from "../constants";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import SaveIcon from '@material-ui/icons/Save';
 import { decodeToken, isExpired } from "react-jwt";
+import { SessionChecker } from "../utils/SessionChecker";
 
-
-
-
-export default function CustomerCRUD() {
+export default function EmployeeCRUD() {
   const useStyles = makeStyles((theme) => ({
     root: {
       backgroundColor: Colors.CUSTOMER_LIGHT_COLOR, minHeight: "100vh",
@@ -192,7 +183,7 @@ const [mobErrorText, setMobErrorText] = useState("");
     }
     if( /^-?[0-9]+$/.test(e.target.value+'') === false || e.target.value.length > 10 ){
       return;
-    } 
+    }
     setCustomerDetails({ ...customerDetails, cusMobNo: e.target.value });
   };
 
@@ -232,7 +223,7 @@ const [mobErrorText, setMobErrorText] = useState("");
       }
 
       if ((customerDetails.cusMobNo).length === 10) {
-        axios.post(Helpers().apiURL + "/updateVerify", customerDetails)
+        axios.post(APIClient.API_BASE_URL + "/customerProcess/updateCustomerData", customerDetails,APIClient.API_HEADERS)
           .then((response) => {
             setmessage(response.data.message);
             if (response.data.message === "updated") {
@@ -283,11 +274,12 @@ const [mobErrorText, setMobErrorText] = useState("");
           return
         }
       }
-      
+
       if ((customerDetails.cusMobNo).length === 10) {
         customerDetails["cusName"] = toTitleCase(customerDetails["cusName"])
-        axios.post(Helpers().apiURL + "/addCustomerData", customerDetails)
+        axios.post(APIClient.API_BASE_URL + "/customerProcess/addCustomerData", customerDetails,APIClient.API_HEADERS)
           .then((response) => {
+            console.log(response)
             setmessage(response.data.message);
             if (response.data.message === "RegistrationSuccess") {
               setmessage("Customer Details Added Successfully");
@@ -347,7 +339,8 @@ const [mobErrorText, setMobErrorText] = useState("");
   }
 
   useEffect(() => {
-    sessionCheck()
+    let decodedTokenData =   SessionChecker()
+    decodedTokenData.success? settokenData(decodedTokenData.message):navigate("/")
     if (page === "Add") {
       setBtnName("Save");
       getCurrentDataAndTime();
@@ -384,15 +377,15 @@ const [mobErrorText, setMobErrorText] = useState("");
           <div className={classes.root} >
           <AppBarHead dataParent={{ appBtnColor: Colors.CUSTOMER_MAIN_COLOR, appBtnText: "Customer Details", userData: tokenData.userData }} />
           <Typography className={classes.titleText}>{page} Customer </Typography>
-    
+
           <div className={classes.divFlexBox} >
             <div>
               <Card elevation={5} className={classes.card} >
-    
+
                 <div className={classes.textfiedFlexItem}
                   style={{ display: dateTextVisibility }} >
                   <Typography className={classes.textFieldLabel}>Date</Typography>
-    
+
                   <TextField
                     size="small"
                     variant="outlined"
@@ -403,8 +396,8 @@ const [mobErrorText, setMobErrorText] = useState("");
                     className={classes.textField}
                   ></TextField>
                 </div>
-    
-    
+
+
                 <div className={classes.textfiedFlexItem} >
                   <Typography className={classes.textFieldLabel}>Name</Typography>
                   <TextField
@@ -413,19 +406,19 @@ const [mobErrorText, setMobErrorText] = useState("");
                     type="text"
                     inputProps={{ readOnly: textFieldReadOnly }}
                     fullWidth
-    
+
                     placeholder="Enter Name"
                     value={customerDetails.cusName}
                     onChange={addCustomerName}
                   ></TextField>
                 </div>
-    
-    
-    
+
+
+
                 <div className={classes.textfiedFlexItem} >
                   <Typography className={classes.textFieldLabel}>Mobile No</Typography>
                   <TextField
-                  
+
                     autoComplete='ViewCrunch'
                     size="small"
                     fullWidth
@@ -442,7 +435,7 @@ const [mobErrorText, setMobErrorText] = useState("");
                     onChange={addCustomerMobNo}
                   ></TextField>
                 </div>
-    
+
                 <div className={classes.textfiedFlexItem} >
                   <Typography className={classes.textFieldLabel}>Email</Typography>
                   <TextField
@@ -457,10 +450,10 @@ const [mobErrorText, setMobErrorText] = useState("");
                     onChange={addCustomerEmail}
                   ></TextField>
                 </div>
-    
+
                 <div className={classes.textfiedFlexItem} >
                   <Typography className={classes.textFieldLabel}>Address</Typography>
-    
+
                   <TextField
                     autoComplete='ViewCrunch'
                     multiline
@@ -474,7 +467,7 @@ const [mobErrorText, setMobErrorText] = useState("");
                     inputProps={{ readOnly: textFieldReadOnly }}
                   ></TextField>
                 </div>
-    
+
                 <div style={{ display: "flex", flexDirection: "row", }}>
                   <Button
                     startIcon={<ArrowBackIcon />}
@@ -485,7 +478,7 @@ const [mobErrorText, setMobErrorText] = useState("");
                   >
                     Back
                   </Button>
-    
+
                   <Button
                     startIcon={<SaveIcon />}
                     className={classes.btnSave}
@@ -501,10 +494,10 @@ const [mobErrorText, setMobErrorText] = useState("");
               </Card>
             </div>
           </div>
-    
-    
-    
-    
+
+
+
+
           <div>
             <Snackbar
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -517,12 +510,12 @@ const [mobErrorText, setMobErrorText] = useState("");
               </Alert>
             </Snackbar>
           </div>
-    
+
         </div>
 }
-    
+
     </>
-    
-   
+
+
   );
 }

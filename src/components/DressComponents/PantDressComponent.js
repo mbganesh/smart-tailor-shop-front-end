@@ -6,11 +6,10 @@ import { useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { useEffect, React, useMemo, useCallback } from "react";
 import axios from "axios";
-import Helpers from "./Helpers";
 import useState from "react-usestateref";
 import swal from "sweetalert2";
 import AutorenewIcon from "@material-ui/icons/Autorenew";
-import { Colors, Fonts } from "./constants";
+import { Colors, Fonts, APIClient } from "../../constants";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -162,9 +161,9 @@ const OnPantBtnClickClose = (OrderId) => {
   };
 
   const getMeasurementDataForPerson = (orderID, selectedPersonValue, dress, text) => {
-    var dataToSend = { user: "admin", mobNo: mobNo, personName: selectedPersonValue, };
+    var dataToSend = { user: "admin", username: props.tokenData.userData.emailId, mobNo: mobNo, personName: selectedPersonValue, };
     try {
-      axios.post(Helpers().apiURL + "/getMeasurementDataForPerson", dataToSend)
+      axios.post(APIClient.API_BASE_URL + "/orderProcess/getMeasurementDataForPerson", dataToSend ,APIClient.API_HEADERS)
         .then(function (response) {
          if (dress === "pant") {
             const result = pantData.map((item) => {

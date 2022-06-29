@@ -14,14 +14,26 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import FooterLandingPage from "../components/FooterLandingPage";
 
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepButton from '@mui/material/StepButton';
+
 
 
 const mainColor = Colors.HOME_MAIN_COLOR
 const lightColor = "#ffe6f0"
 
 
-export default function RegisterPage() {
+export default function RegisterPagePro() {
   const navigate = useNavigate();
+  
+
+  const registerSteps = ['Basic Details' , 'Shop Details' , 'Submit']
+  const [activeStep, setActiveStep] =useState(0);
+  const [completed, setCompleted] =useState({});
+  const handleStep = (step) => () => {
+    setActiveStep(step);
+  };
 
   let date = new Date();
 
@@ -38,6 +50,7 @@ export default function RegisterPage() {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
+
 
   const [buttonVisblity, setButtonVisblity] = useState(false);
   const [loginBtnLoading, setLoginBtnLoading] = useState(false);
@@ -63,6 +76,16 @@ export default function RegisterPage() {
     showPassword: false,
   })
 
+
+  
+  var allFieldNames = Object.keys(registerValues)
+  allFieldNames.pop()
+  
+  function isNotFill(ob) {
+    let isValidData = registerValues[ob].isValid
+    return isValidData
+  }
+//   allFieldNames.every(isNotFill)
 
   const showAlert = (title, text, icon) => {
     swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: "#3085d6", cancelButtonColor: "#d33", })
@@ -324,24 +347,47 @@ export default function RegisterPage() {
   return (
     <Box >
       <AppBarGeneral />
+
+
+
       <Stack alignItems={"center"} >
         <Paper variant="outlined" sx={{ mt: 5, mb: 5, width: { md: 500, xs: 350 }, p: 5, boxShadow: { xs: "none", md: "0px 4px 5px -2px rgba(0,0,0,0.2),0px 7px 10px 1px rgba(0,0,0,0.14),0px 2px 16px 1px rgba(0,0,0,0.12)" } }} >
           <Stack direction={"column"} justifyContent={"center"} alignItems={"center"} gap={4}>
             <Typography fontSize={{ lg: 34, md: 34, sm: 30, xs: 30 }} sx={{ color: Colors.MAIN_THEME_COLOR, fontWeight: "bold" }}>Create an Account</Typography>
-            <TextField autoComplete="off" fullWidth size="small" label="Name" variant="outlined"
+           
+            <Stepper nonLinear activeStep={activeStep}>
+        {registerSteps.map((label, index) => (
+          <Step key={label} completed={completed[index]}>
+          <StepButton color="inherit" onClick={handleStep(index)}>
+            {label}
+          </StepButton>
+        </Step>
+        ))}
+      </Stepper>
+
+
+      {allFieldNames.every(isNotFill) ?  (
+          <>
+            
+            <Button  fullWidth size="small" variant="contained" sx={{
+              bgcolor: Colors.MAIN_THEME_COLOR, ":hover": {
+                bgcolor: Colors.MAIN_THEME_COLOR
+              }
+            }}>Finish</Button>
+
+
+          </>
+        ) : (
+            <>
+            {activeStep === 0 ? 
+          (  <>
+ <TextField autoComplete="off" fullWidth size="small" label="Name" variant="outlined"
               onChange={onChangeName} value={registerValues.name.text}
               error={registerValues.name.isValid}
               helperText={registerValues.name.errorMessage} />
 
             <TextField autoComplete="off" fullWidth size="small" label="Email" variant="outlined"
               onChange={onChangeEmail} value={registerValues.email.text}
-              // InputProps={{
-              //   endAdornment: (
-              //     <InputAdornment position="end">
-              //       @gmail.com
-              //     </InputAdornment>
-              //   )
-              // }}
               error={registerValues.email.isValid}
               helperText={registerValues.email.errorMessage} />
 
@@ -368,7 +414,19 @@ export default function RegisterPage() {
                   </InputAdornment>
                 )
               }} />
-            <TextField fullWidth size="small" label="Shop Name" variant="outlined" onChange={onChangeShopName} value={registerValues.shopname.text}
+         <Stack direction={'row'} width='100%' justifyContent='space-between' >
+           
+              <Button onClick={() => setActiveStep(activeStep+1)} fullWidth size="small" variant="contained" sx={{
+              bgcolor: Colors.MAIN_THEME_COLOR, ":hover": {
+                bgcolor: Colors.MAIN_THEME_COLOR,
+              },
+              marginLeft:'10px'
+            }}>Next</Button>
+              </Stack>
+            </> 
+            )  :
+            (  <>
+<TextField fullWidth size="small" label="Shop Name" variant="outlined" onChange={onChangeShopName} value={registerValues.shopname.text}
               autoComplete="off"
               error={registerValues.shopname.isValid}
               helperText={registerValues.shopname.errorMessage} />
@@ -382,12 +440,35 @@ export default function RegisterPage() {
               autoComplete="off"
               error={registerValues.shopaddress.isValid}
               helperText={registerValues.shopaddress.errorMessage} />
+    <Stack direction={'row'} width='100%' justifyContent='space-between' >
+              <Button onClick={() => setActiveStep(activeStep-1)} fullWidth size="small" variant="contained" sx={{
+              bgcolor: Colors.MAIN_THEME_COLOR, ":hover": {
+                bgcolor: Colors.MAIN_THEME_COLOR
+              },
+              marginRight:'10px'
 
-            <Button onClick={onRegisterBtnClick} fullWidth size="small" variant="contained" sx={{
+            }}>Back</Button>
+              <Button onClick={() => setActiveStep(activeStep+1)} fullWidth size="small" variant="contained" sx={{
+              bgcolor: Colors.MAIN_THEME_COLOR, ":hover": {
+                bgcolor: Colors.MAIN_THEME_COLOR,
+              },
+              marginLeft:'10px'
+            }}>Next</Button>
+              </Stack>
+                </> 
+                )   
+        
+        }
+            </>
+        )
+        }
+           
+            
+            {/* <Button onClick={onRegisterBtnClick} fullWidth size="small" variant="contained" sx={{
               bgcolor: Colors.MAIN_THEME_COLOR, ":hover": {
                 bgcolor: Colors.MAIN_THEME_COLOR
               }
-            }}>Register</Button>
+            }}>Register</Button> */}
             <Stack direction={"row"}>
               <Typography>Already have an Account?</Typography>
               <Typography onClick={() => { navigate("/login") }} ml={1} sx={{ cursor: "pointer", textDecoration: "underline", color: Colors.MAIN_THEME_COLOR }}>Login</Typography>

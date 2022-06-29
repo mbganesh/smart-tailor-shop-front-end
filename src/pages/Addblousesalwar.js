@@ -4,14 +4,14 @@ import { useEffect, React, useMemo, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Helpers from "./Helpers";
 import useState from "react-usestateref";
 import swal from "sweetalert2";
-import salwarSVG from "./images/dressLogos/salwar_nav.svg";
-import blouseSVG from "./images/dressLogos/blouse_nav.svg";
-import shirtSVG from "./images/dressLogos/shirt.png";
-import pantSVG from "./images/dressLogos/pant.png";
-import { Colors, Fonts } from "./constants";
+
+import salwarSVG from "../images/dressLogos/salwar_nav.svg";
+import blouseSVG from "../images/dressLogos/blouse_nav.svg";
+import shirtSVG from "../images/dressLogos/shirt.png";
+import pantSVG from "../images/dressLogos/pant.png";
+import { Colors, Fonts, APIClient } from "../constants";
 import { withStyles } from '@material-ui/core/styles';
 
 import Dialog from '@material-ui/core/Dialog';
@@ -22,12 +22,13 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 
-import { faCalendarWeek, faBoxes, faCheck, faSpinner, faShoppingBag, faCheckDouble, faFolder, faUsers, faUser, } from '@fortawesome/free-solid-svg-icons'
-import SalwarDressComponent from "./SalwarDressComponent";
-import BlouseDressComponent from "./BlouseDressComponent";
-import ShirtDressComponent from "./ShirtDressComponent";
-import PantDressComponent from "./PantDressComponent";
-import OrderDressBottomComponent from "./OrderDressBottomComponent";
+import { faCalendarWeek, faBoxes, faCheck, faSpinner, faShoppingBag, faCheckDouble, faFolder, faUsers, faUser } from '@fortawesome/free-solid-svg-icons'
+
+import SalwarDressComponent from "../components/DressComponents/SalwarDressComponent";
+import BlouseDressComponent from "../components/DressComponents/BlouseDressComponent";
+import ShirtDressComponent from "../components/DressComponents/ShirtDressComponent";
+import PantDressComponent from "../components/DressComponents/PantDressComponent";
+import OrderDressBottomComponent from "../components/OrderDressBottomComponent";
 
 import Box from "@material-ui/core/Box";
 import Collapse from "@material-ui/core/Collapse";
@@ -44,6 +45,7 @@ import { refType } from "@mui/utils";
 
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import CurrencyRupee from "@mui/icons-material/CurrencyRupee";
+import { SessionChecker } from "../utils/SessionChecker";
 
 
 // Salwar Color Codes
@@ -310,6 +312,7 @@ export default function Addblousesalwar() {
   const [blouseData, setBlouseData, blouseDataRef] = useState([]);
   const [shirtData, setShirtData, shirtDataRef] = useState([]);
   const [pantData, setPantData, pantDataRef] = useState([]);
+  const [tokenData, settokenData] = useState({})
 
   const shirtMeasurementList = useMemo(() => { return ["Shirt Length", "Shoulder", "Sleeve Length", "Sleeve Open", "Chest Width", "Collar Length", "Pocket Down"]; }, []);
   const pantMeasurementList = useMemo(() => { return ["Pant Length", "Hip", "Inseam", "Seat", "Thigh Loose", "Knee", "Front Raise", "Back Raise", "Leg Opening"]; }, []);
@@ -587,7 +590,7 @@ export default function Addblousesalwar() {
     setLoadingModal(true)
     setLoadingModalText("Saving Order... Please be patient...")
     axios
-        .post(Helpers().apiURL + "/addOrder", dataToSave)
+        .post(APIClient.API_BASE_URL + "/orderProcess/addOrder", dataToSave,APIClient.API_HEADERS)
         .then((response) => {
           setLoadingModal(false)
           if (response.data.message === "DataStored") {
@@ -661,7 +664,8 @@ export default function Addblousesalwar() {
       "allInfoCompletionStatus": allInfoCompletionStatusRef.current,
       finalAmount: parseInt(FinalAmount),
       grandTotal: parseInt(grantTotalRef.current),
-      fullPaymentReceived: payValue < parseInt(totalAmount) ? false : true
+      fullPaymentReceived: payValue < parseInt(totalAmount) ? false : true,
+      username:tokenData.userData.emailId
     };
     setDataToSave(dataToSave)
     setLoadingModal(false)
@@ -737,11 +741,11 @@ export default function Addblousesalwar() {
     }
   };
 
-  const getSalwarBlouseCostData = () => {
-    var dataToSend = { user: "admin" };
+  const getSalwarBlouseCostData = (tokenData) => {
+    var dataToSend = { user: "admin", username: tokenData.userData.emailId };
     try {
       axios
-        .post(Helpers().apiURL + "/viewBlouseSalwarLastInsert", dataToSend)
+        .post(APIClient.API_BASE_URL + "/rateProcess/viewBlouseSalwarLastInsert", dataToSend,APIClient.API_HEADERS)
         .then(function (response) {
           let input = response.data.message;
           if (response.data.message.length === 0) {
@@ -945,9 +949,9 @@ export default function Addblousesalwar() {
         confirmButtonText: 'Ok'
       }).then((willWarn) => {
         if (willWarn.isConfirmed) {
-          var datatoSend = { user: "admin", orderID: orderDetailsPersonalData["orderID"] }
+          var datatoSend = { user: "admin", orderID: orderDetailsPersonalData["orderID"], username: tokenData.userData.emailId }
           // return
-          axios.post(Helpers().apiURL + "/removeOrderID", datatoSend).then((res) => {
+          axios.post(APIClient.API_BASE_URL + "/orderProcess/removeOrderID", datatoSend,APIClient.API_HEADERS).then((res) => {
             navigate(-2);
           });
         }
@@ -1020,7 +1024,13 @@ export default function Addblousesalwar() {
 
 
   useEffect(() => {
-    getSalwarBlouseCostData();
+
+    // Session Check
+    let decodedTokenData = SessionChecker()
+    decodedTokenData.success ? settokenData(decodedTokenData.message) : navigate("/")
+
+
+    getSalwarBlouseCostData(decodedTokenData.message);
     if (userName === "Designing Team") {
       setDesignTeamContentHider("none");
     }
@@ -1167,6 +1177,55 @@ export default function Addblousesalwar() {
               </Button>
             </Badge>
 
+
+            <Badge
+              badgeContent={
+                <div style={{ backgroundColor: Colors.BLOUSE_LIGHT_COLOR, fontSize: 12, color: Colors.BLOUSE_COLOR, padding: 2, paddingBottom: 6, borderRadius: 5, width: 10, height: 10 }}>
+                  <Typography style={{ fontSize: 10 }}>
+                    {blouseDataRef.current.length}
+                  </Typography>
+                </div>
+              }
+            >
+              <Button
+                onClick={OnAddShirtBtnClick}
+                variant="contained"
+                startIcon={<img
+                  alt="blouseBtn"
+                  style={{ width: "18px", filter: "invert(100%) sepia(100%) saturate(0%) hue-rotate(162deg) brightness(105%) contrast(102%)", }}
+                  src={shirtSVG}
+                />}
+                style={{ color: "white", background: shirtColorCode, fontWeight: "bold", marginLeft: 50 }}
+              >
+                Add Shirt
+              </Button>
+            </Badge>
+
+
+            <Badge
+              badgeContent={
+                <div style={{ backgroundColor: Colors.BLOUSE_LIGHT_COLOR, fontSize: 12, color: Colors.BLOUSE_COLOR, padding: 2, paddingBottom: 6, borderRadius: 5, width: 10, height: 10 }}>
+                  <Typography style={{ fontSize: 10 }}>
+                    {blouseDataRef.current.length}
+                  </Typography>
+                </div>
+              }
+            >
+              <Button
+                onClick={OnAddPantBtnClick}
+                variant="contained"
+                startIcon={<img
+                  alt="blouseBtn"
+                  style={{ width: "18px", filter: "invert(100%) sepia(100%) saturate(0%) hue-rotate(162deg) brightness(105%) contrast(102%)", }}
+                  src={pantSVG}
+                />}
+                style={{ color: "white", background: pantColorCode, fontWeight: "bold", marginLeft: 50 }}
+              >
+                Add Pant
+              </Button>
+            </Badge>
+
+
             {/* <Button onClick={OnAddShirtBtnClick} variant="contained" style={{ color: "white", background: shirtColorCode, margin: "0.5%", width: "200px", fontWeight: "bold", fontSize: "14px" }} >
               <img
               alt = "shirtBtn"
@@ -1203,6 +1262,7 @@ export default function Addblousesalwar() {
             sweetAlertShow={sweetAlertShow}
             salwarDataRef={salwarDataRef}
             onSalwarDataChange={onSalwarDataChange}
+            tokenData={tokenData}
           />
         )}
 
@@ -1219,6 +1279,7 @@ export default function Addblousesalwar() {
                 sweetAlertShow={sweetAlertShow}
                 blouseDataRef={blouseDataRef}
                 onBlouseDataChange={onBlouseDataChange}
+                tokenData={tokenData}
 
               />
             </div>
@@ -1237,6 +1298,7 @@ export default function Addblousesalwar() {
                 mobNo={orderDetailsPersonalData["mobNo"]}
                 sweetAlertShow={sweetAlertShow}
                 shirtDataRef={shirtDataRef}
+                tokenData={tokenData}
               />
             </div>
           )
@@ -1253,6 +1315,7 @@ export default function Addblousesalwar() {
               mobNo={orderDetailsPersonalData["mobNo"]}
               sweetAlertShow={sweetAlertShow}
               pantDataRef={pantDataRef}
+              tokenData={tokenData}
 
             />
           )
@@ -1279,6 +1342,7 @@ export default function Addblousesalwar() {
         prevPage = {prevPage}
         prevOrderStatus = {prevOrderStatus}
         prevSearchQuery = {prevSearchQuery}
+        tokenData={tokenData}
 
       />
 
