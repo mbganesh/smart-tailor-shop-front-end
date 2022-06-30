@@ -32,10 +32,9 @@ function App() {
         <Routes>
           <Route exact path='/' element={<LandingPage />} />
           <Route exact path='/login' element={<LoginPage />} />
-          <Route exact path='/register_old' element={<RegisterPage />} />
+          <Route exact path='/register' element={<RegisterPage />} />
           <Route exact path='/homepage' element={<HomePage />} />
           <Route exact path='/orderDetailPage' element={<OrderDetailsHome />} />
-    
           <Route exact path='/customer' element={<CustomerCRUD />} />
           <Route exact path='/customer-details' element={<CustomerDetails />} />
           <Route exact path='/mail' element={<Gmail />} />
@@ -47,10 +46,6 @@ function App() {
           <Route exact path='/designingTeamView' element={<DesignTeamView />} />
           <Route exact path='/resetPage' element={<ResetPage />} />
           <Route exact path='/dashboard' element={<DashBoard />} />
-
-          <Route exact path='/register' element={<RegisterPagePro />} />
-
-
         </Routes>
       </BrowserRouter>
     </>
