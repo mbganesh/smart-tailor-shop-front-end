@@ -20,8 +20,6 @@ import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
 
 
-import RegisterPagePro from './pages/RegisterPagePro';
-
 function App() {
   useEffect(() => {
     document.title = "Smart Tailor Shop";
