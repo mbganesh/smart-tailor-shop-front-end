@@ -18,7 +18,7 @@ import React, { useEffect } from "react";
 import DashBoard from './pages/DashBoard';
 import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
-
+import PaymentGateWay from './pages/PaymentGateWay';
 
 function App() {
   useEffect(() => {
@@ -44,6 +44,8 @@ function App() {
           <Route exact path='/designingTeamView' element={<DesignTeamView />} />
           <Route exact path='/resetPage' element={<ResetPage />} />
           <Route exact path='/dashboard' element={<DashBoard />} />
+
+          <Route exact path='/payment' element={<PaymentGateWay/>}/>
         </Routes>
       </BrowserRouter>
     </>

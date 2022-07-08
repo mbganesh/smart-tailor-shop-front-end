@@ -48,6 +48,4 @@ export default {
   DASHBOARD_LIGHT_COLOR:"#d4d1e0",
   MAIN_THEME_COLOR:"#4C3575"
   
-
-  
 };
